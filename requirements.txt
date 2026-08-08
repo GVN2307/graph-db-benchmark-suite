@@ -1,0 +1,6 @@
+docker
+python
+pandas
+numpy
+networkx
+pyyaml
