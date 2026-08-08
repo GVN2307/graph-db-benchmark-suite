@@ -1,103 +1,131 @@
-# Graph Database Benchmark Suite
+# Graph Database Cloud Benchmark Suite
 
-## Overview
-This repository contains a complete benchmarking harness for comparing graph database platforms. All code, data loaders, workload definitions, orchestration scripts, and analysis artifacts are included so that anyone with free‑tier cloud accounts can reproduce the results from a single `README`.
-
----
-
-## Repository Structure
-```
-graph-db-benchmark-suite/
-├─ data_loaders/        # Scripts that generate or ingest benchmark datasets
-├─ workloads/           # Query/transaction definitions for each benchmark
-├─ harness/             # Orchestration code (Python driver, Bash wrappers)
-├─ results/             # Raw benchmark output (CSV/JSON) from each run
-├─ analysis/            # Markdown analysis and optional Jupyter notebooks
-├─ README.md            # This document (instructions, methodology, results)
-└─ LICENSE              # Open‑source license (MIT)
-```
+This suite evaluates and benchmarks managed graph database cloud platforms on identical datasets and query workloads:
+1. CognoDB Cloud
+2. Neo4j AuraDB Free
+3. FalkorDB Cloud
+4. TypeDB Cloud
+5. NebulaGraph Cloud
 
 ---
 
-## 1. Reproducible Instructions
-The following steps work on **any** machine with a free‑tier account on the target cloud providers (e.g., AWS Free Tier, GCP Free Tier, Azure Free Tier) and require only Docker and Python 3.9+.
+## Objective
+The goal is to provide a reproducible, fair comparison of read throughput/latency, write latency, indexing speed, concurrent scaling, and aggregations across various graph database systems under free-tier constraints.
 
-### Prerequisites
-1. Install **Docker Desktop** (or Docker Engine) and ensure the daemon is running.
-2. Install **Python 3.9+** and `pip`.
-3. Clone this repository (already done).
-4. Install Python dependencies:
+---
+
+## Platforms Tested
+- **CognoDB**: Cypher query language, Bolt API protocol. Instance: Free tier cloud instance.
+- **Neo4j Aura**: Cypher query language, Bolt API protocol. Instance: AuraDB Free instance (limit ~200K elements).
+- **FalkorDB**: Cypher query language, Redis API protocol. Instance: Free Tier (limit 100MB RAM).
+- **TypeDB**: TypeQL query language, TypeQL RPC API protocol. Instance: TypeDB Cloud Free Cluster.
+- **NebulaGraph**: nGQL query language, Thrift RPC API protocol. Instance: Nebula Cloud Free Tier.
+
+---
+
+## Dataset
+- **Source**: SNAP CA-AstroPh collaboration network (Astro Physics collaborations)
+- **Metadata**: 18,772 nodes, 198,110 edges (undirected, deduplicated)
+- **Format**: Space-separated node ID pairs.
+- **Loading**: Cleaned, parsed, and batched sequentially on each database.
+
+---
+
+## Methodology
+1. **Deduplication**: Undirected edge pairs are deduplicated to guarantee exactly 198,110 edges.
+2. **Database Reset**: Prior to testing, each platform is entirely cleared of data and index definitions are rebuilt.
+3. **Warm-up**: Runs 50 query iterations for traversals, lookups, and paths to cache queries prior to benchmark metrics collection.
+4. **Isolated Workloads**:
+   - **Traversals**: 1-hop, 2-hop, and 3-hop counts executed 100 times using random start nodes.
+   - **Lookups**: 100 point lookups and 100 indexed property lookups using random node IDs.
+   - **Aggregations**: 100 node count and edge count aggregations.
+5. **Concurrent Stress Workload**: 10 concurrent threads running for 60 seconds (80% read / 20% write).
+6. **Correctness Verification**: Cross-references query results against a Python-based memory model ground truth to verify graph topology integrity.
+
+---
+
+## How to Run
+
+1. **Setup Environment and Install Dependencies**:
    ```bash
-   cd graph-db-benchmark-suite
    python -m venv .venv
-   .venv\Scripts\activate   # Windows PowerShell
+   .\.venv\Scripts\activate
    pip install -r requirements.txt
    ```
-5. (Optional) Set up free‑tier accounts for the platforms you wish to test and obtain connection strings / credentials. Store them in a local `.env` file (example provided in `harness/.env.example`).
 
-### Benchmark Execution
-From the repository root run:
-```bash
-bash harness/run_all.sh
-```
-`run_all.sh` performs the following steps:
-1. **Data loading** – Executes `data_loaders/load_dataset.py` for each platform, creating a synthetic LDBC‑SF100 graph (≈100 M edges).
-2. **Warm‑up** – Runs a short warm‑up workload to bring caches online.
-3. **Workload execution** – Executes each query defined in `workloads/queries.json` and records latency, throughput, and resource utilization.
-4. **Result aggregation** – Collates CSV logs into `results/summary.csv` and generates Markdown tables/plots in `analysis/`.
+2. **Configure Environment Variables**:
+   Copy `.env.example` to `.env` and fill in the connection details for your cloud database instances.
 
-All output is written under the `results/` directory. The script exits with a non‑zero code if any step fails, making it CI‑friendly.
+3. **Run Benchmark Suite**:
+   ```bash
+   python main.py
+   ```
 
 ---
 
-## 2. Methodology
-| Component | Description |
-|-----------|-------------|
-| **Dataset** | Synthetic LDBC Social Network (SF100) generated with `networkx`. Includes 1 M vertices and ~100 M edges, mimicking realistic degree distribution. |
-| **Workloads** | 10 representative queries covering traversals, pattern matching, aggregations, and write‑heavy transactions (see `workloads/queries.json`). |
-| **Metrics** | *Latency* (p50, p95, p99), *Throughput* (ops/sec), *CPU*, *Memory*, *Disk I/O* (collected via Docker stats). |
-| **Environment** | Each platform runs in a Docker container on a `t3.medium`‑equivalent VM (2 vCPU, 4 GiB RAM) on the respective cloud provider. OS: Ubuntu 22.04. Docker Engine 24.x. |
-| **Runs** | Each query is executed **5** times; the median is reported. Warm‑up runs are discarded. |
-| **Caveats** | – Synthetic data may not capture all production skew.<br>– Free‑tier limits (CPU throttling, network bandwidth) can affect absolute numbers but relative comparisons remain valid.<br>– Platform‑specific configuration defaults are used; optimal tuning may shift results. |
+## Results Matrix
+
+### 1. Data Ingestion Speed
+| Platform | Total Load Time (s) | Node Load Time (s) | Edge Load Time (s) | Node Throughput (nodes/s) | Edge Throughput (edges/s) | Notes |
+| --- | --- | --- | --- | --- | --- | --- |
+| **CognoDB** | 5.185 | 2.524 | 2.661 | 4806.795 | 7443.779 | Sampled to 10% (12,132 nodes, 19,811 edges) |
+| **Neo4j Aura** | 48.225 | 1.325 | 46.899 | 14162.330 | 4224.167 | Full dataset (18,772 nodes, 198,110 edges) |
+| **FalkorDB** | 103.209 | 3.842 | 99.367 | 4886.000 | 1993.720 | Full dataset (18,772 nodes, 198,110 edges) |
+| **TypeDB** | N/A | N/A | N/A | N/A | N/A | Failed during run (503 Service Unavailable) |
+| **NebulaGraph** | N/A | N/A | N/A | N/A | N/A | Connection failed (BAD service status on host) |
+
+### 2. Multi-Hop Traversals (Latency in ms)
+| Platform | 1-Hop p50 | 1-Hop p95 | 2-Hop p50 | 2-Hop p95 | 3-Hop p50 | 3-Hop p95 |
+| --- | --- | --- | --- | --- | --- | --- |
+| **CognoDB** | 307.46 | 411.39 | 286.98 | 406.78 | 512.00 | 1852.42 |
+| **Neo4j Aura** | 98.94 | 139.39 | 84.03 | 172.03 | 97.66 | 164.99 |
+| **FalkorDB** | 316.16 | 429.31 | 304.38 | 411.39 | 324.35 | 501.50 |
+| **TypeDB** | N/A | N/A | N/A | N/A | N/A | N/A |
+| **NebulaGraph** | N/A | N/A | N/A | N/A | N/A | N/A |
+
+### 3. Lookups (Latency in ms)
+| Platform | Point p50 | Point p95 | Indexed p50 | Indexed p95 |
+| --- | --- | --- | --- | --- |
+| **CognoDB** | 314.11 | 485.38 | 307.71 | 505.60 |
+| **Neo4j Aura** | 92.42 | 151.04 | 86.40 | 146.43 |
+| **FalkorDB** | 311.30 | 434.18 | 309.76 | 418.82 |
+| **TypeDB** | N/A | N/A | N/A | N/A |
+| **NebulaGraph** | N/A | N/A | N/A | N/A |
+
+### 4. Aggregations (Latency in ms)
+| Platform | Node Count p50 | Node Count p95 | Edge Count p50 | Edge Count p95 |
+| --- | --- | --- | --- | --- |
+| **CognoDB** | 309.76 | 512.00 | 313.86 | 533.50 |
+| **Neo4j Aura** | 77.57 | 136.06 | 81.54 | 172.80 |
+| **FalkorDB** | 319.23 | 451.84 | 310.78 | 410.37 |
+| **TypeDB** | N/A | N/A | N/A | N/A |
+| **NebulaGraph** | N/A | N/A | N/A | N/A |
+
+### 5. Mixed Workload (Concurrent Load Test)
+| Platform | QPS | p50 Latency (ms) | p95 Latency (ms) | Failures |
+| --- | --- | --- | --- | --- |
+| **CognoDB** | 24.4 | 308.66 | 470.78 | 0 |
+| **Neo4j Aura** | 110.0 | 81.17 | 126.83 | 0 |
+| **FalkorDB** | 3.1 | 3311.72 | 3888.43 | 0 |
+| **TypeDB** | N/A | N/A | N/A | N/A |
+| **NebulaGraph** | N/A | N/A | N/A | N/A |
 
 ---
 
-## 3. Results Matrix
-> **Note:** The tables below are placeholders. After running the benchmark they will be automatically populated by `analysis/generate_report.py`.
+## Analysis
 
-| Platform | Query | p50 Latency (ms) | p95 Latency (ms) | Throughput (ops/s) |
-|----------|-------|------------------|------------------|--------------------|
-| Neo4j (Free) | Q1 | – | – | – |
-| Amazon Neptune (Free) | Q1 | – | – | – |
-| JanusGraph (Open‑Source) | Q1 | – | – | – |
-| … | … | … | … | … |
+### Data Ingestion Speed
+Neo4j AuraDB Free performed with high node throughput (14,162 nodes/s) but slowed down during relationship insertion due to index verification overhead on a cloud instance, completing the full dataset load in 48.23s. FalkorDB required 103.21s to load the dataset, heavily impacted by the 100MB RAM limit on its free tier, which triggers disk swaps/memory paging during intensive edge loads. CognoDB completed loading in 5.19s, but was restricted to a 10% sampled subset (19,811 edges) because of its strict free-tier scale limits (0.5GB RAM) preventing full dataset execution.
 
-*Charts*: `analysis/plots/latency_chart.png` and `analysis/plots/throughput_chart.png` are generated automatically.
+### Query Latency (Traversals, Lookups, Aggregations)
+Neo4j AuraDB demonstrated superior latency characteristics across all read operations. For 1-hop, 2-hop, and 3-hop traversals, Neo4j stayed below 100ms (p50), utilizing its native graph storage engine (pointer chasing) and efficient driver-level connection pooling. Both FalkorDB and CognoDB averaged around 300ms (p50) for traversals, lookups, and count aggregations. This difference is mainly due to connection-level overhead, higher network latency on free tier endpoints, and single-threaded query processing limits on those free instances. CognoDB's 3-hop traversal latency rose to 1.85s (p95) as query complexity scaled.
 
----
-
-## 4. Analysis
-A concise discussion of the observed performance is provided in `analysis/analysis.md`. It explains why certain platforms excel at particular query types (e.g., index‑supported traversals) and highlights bottlenecks observed on free‑tier instances.
+### Concurrent Performance under Stress
+Under a 10-thread concurrent mixed workload (80% read / 20% write), Neo4j Aura reached 110.0 QPS with stable latencies (81.17ms p50, 126.83ms p95), showcasing its robust concurrent execution capabilities. CognoDB handled the concurrent load at 24.4 QPS with 308.66ms p50 latency. FalkorDB suffered severe degradation, dropping to 3.1 QPS with median latencies exceeding 3.3s. This indicates that FalkorDB's free instance is single-threaded or restricted under concurrent connection pools, leading to thread contention, and memory exhaustion under concurrent write-write/read-write workloads.
 
 ---
 
-## 5. How to Access a Private Repository
-Since this repo is private, grant **read** access to the reviewers:
-1. Navigate to **Settings → Manage access**.
-2. Click **Invite a collaborator**.
-3. Add the GitHub usernames or email addresses of the reviewers.
-4. They will receive an invitation and can clone the repo after accepting.
-
----
-
-## 6. License
-This benchmark suite is released under the **MIT License** (see `LICENSE`).
-
----
-
-## 7. Contact
-For questions or to request additional platforms, open an issue or contact the repository owner.
-
----
-
-*End of README*
+## Caveats
+- **Free Tier Scale & Throttling**: Free cloud offerings impose CPU/RAM caps. CognoDB ran with a 10% sample due to RAM limitations. FalkorDB's performance fell due to its 100MB RAM constraint.
+- **Connection Issues**: NebulaGraph suffered bad connection statuses on its Thrift RPC port. TypeDB returned HTTP 503 Service Unavailable on its cloud endpoint.
+- **Network Overhead**: Benchmark measurements include network round-trips from the client to the cloud instance, which adds a baseline latency of approximately 70-150ms depending on the region.

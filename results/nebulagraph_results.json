@@ -1,0 +1,5 @@
+{
+    "platform": "NebulaGraph",
+    "metrics": {},
+    "error": "Connection failed: The services status exception: [services: ('16.58.243.197', 9669), status: BAD]"
+}

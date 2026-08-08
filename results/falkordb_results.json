@@ -1,0 +1,96 @@
+{
+    "platform": "FalkorDB",
+    "metrics": {
+        "data_loading": {
+            "total_load_time_sec": 103.209,
+            "node_load_time_sec": 3.842,
+            "edge_load_time_sec": 99.367,
+            "node_throughput_nodes_sec": 4886.045,
+            "edge_throughput_edges_sec": 1993.714
+        },
+        "correctness": {
+            "1_hop_verified": true,
+            "2_hop_verified": true,
+            "edge_count_expected": 198110,
+            "edge_count_actual": 198110,
+            "ratio": 1.0
+        },
+        "1_hop_traversal": {
+            "p50_latency_ms": 316.159,
+            "p95_latency_ms": 429.311,
+            "mean_latency_ms": 334.916,
+            "stddev_ms": 49.28,
+            "failures": 0,
+            "confidence_interval_p95": [
+                405.635,
+                459.226
+            ]
+        },
+        "2_hop_traversal": {
+            "p50_latency_ms": 304.383,
+            "p95_latency_ms": 411.391,
+            "mean_latency_ms": 318.301,
+            "stddev_ms": 42.182,
+            "failures": 0,
+            "confidence_interval_p95": [
+                368.534,
+                445.586
+            ]
+        },
+        "3_hop_traversal": {
+            "p50_latency_ms": 324.351,
+            "p95_latency_ms": 501.503,
+            "mean_latency_ms": 386.454,
+            "stddev_ms": 211.142,
+            "failures": 0,
+            "confidence_interval_p95": [
+                424.708,
+                1229.2
+            ]
+        },
+        "point_lookup": {
+            "p50_latency_ms": 311.295,
+            "p95_latency_ms": 434.175,
+            "failures": 0
+        },
+        "indexed_lookup": {
+            "p50_latency_ms": 309.759,
+            "p95_latency_ms": 418.815,
+            "failures": 0
+        },
+        "count_nodes": {
+            "p50_latency_ms": 319.231,
+            "p95_latency_ms": 451.839,
+            "failures": 0
+        },
+        "count_edges": {
+            "p50_latency_ms": 310.783,
+            "p95_latency_ms": 410.367,
+            "failures": 0
+        },
+        "mixed_workload": {
+            "total_operations": 186,
+            "successful_operations": 186,
+            "failed_operations": 0,
+            "queries_per_second": 3.1,
+            "p50_latency_ms": 3311.716,
+            "p95_latency_ms": 3888.428
+        },
+        "observability": {
+            "peak_cpu": 69.1,
+            "peak_mem_rss_mb": 266.8359375,
+            "avg_cpu": 15.472753346080307,
+            "total_net_sent_mb": 1157.048,
+            "total_net_recv_mb": 308.282,
+            "duration_sec": 587.679
+        },
+        "cost": {
+            "platform": "FalkorDB",
+            "compute_cost_usd": 0.0131,
+            "storage_cost_usd": 0.0,
+            "total_cost_usd": 0.0131,
+            "cost_per_1k_queries_usd": 0.01474,
+            "cost_per_million_queries_usd": 14.74
+        }
+    }
+}
