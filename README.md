@@ -49,14 +49,27 @@ This simulates a real-world app scenario where multiple people are using the sys
 
 ---
 
-## Explanation of N/A (Not Applicable / Not Available) in Results
+## Explanation of N/A (Not Applicable) and Downsampled Results
 
-In the results tables below, you will see some entries marked as **N/A**. This means the test could not be completed for that specific database. Here is why:
+In the results tables below, you will see some entries marked as **N/A** or labeled as **Downsampled**. Here is a detailed breakdown of why this occurred, how it works, and how it affects the fairness of the comparison:
 
-### CognoDB and TypeDB at 50% and 100% Scales
-Free-tier cloud databases have very strict resource limits:
-- **CognoDB Free Tier** restricts the database to a maximum of 0.5GB of RAM. At 50% load, the benchmark completed successfully. At 100% load, loading all 198,110 edges spammed the database beyond memory constraints and caused connection failures, so the suite automatically downsampled the CognoDB run to 10% scale for stability.
-- **TypeDB Free Tier** was successfully benchmarked at 10%, 50%, and 100% scales after resolving port routing configurations (connecting to port 1729 with TLS enabled).
+### CognoDB 10% Downsampling at 100% Scale
+
+#### Why did this happen?
+CognoDB's managed free tier imposes a strict 0.5GB memory (RAM) allocation. During the 100% scale benchmark (which contains 198,110 edges), loading the complete dataset exhausted the instance memory. This caused the database engine to crash, drop connection sockets, and temporarily suspend the service.
+
+#### How and where is this handled?
+To prevent the benchmark orchestration from failing or hanging indefinitely, the data loader includes an automated fallback handler. When consecutive transaction timeouts or socket drops are detected during ingestion, the loader systematically samples the edges down to 10% of the target dataset volume. This reduces the active memory footprint, allowing the database to remain stable and complete the query execution runs.
+
+#### How is this compared fairly?
+To maintain scientific fairness, the results for CognoDB at 100% scale are explicitly labeled as **Downsampled to 10% for Stability**. 
+- This means CognoDB was querying a graph containing only 19,811 edges, whereas Neo4j Aura and FalkorDB successfully loaded and queried the full 198,110 edges.
+- Therefore, when comparing query latencies, CognoDB appears faster than it would be under a true 100% load because it is traversing a significantly smaller graph.
+- This downsampling is itself a key performance result: it highlights the physical scaling ceiling of CognoDB's free-tier instance, showing that it cannot scale to the full dataset size without data reduction.
+
+### TypeDB and CognoDB at 50% and 100% Scales
+- **TypeDB Cloud Free**: Successfully completed runs at 10%, 50%, and 100% scales. This was achieved by correcting the port mapping to the official gRPC port (1729) and using TLS.
+- **CognoDB Cloud Free**: Completed the 10% and 50% scales successfully at full data volume. At 100% scale, it automatically triggered the 10% downsampling fallback described above.
 
 
 ### TypeDB 3-Hop Queries
