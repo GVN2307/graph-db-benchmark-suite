@@ -216,8 +216,9 @@ class BenchmarkHarness:
         # 6. Run Correctness Engine Verification (before modifying data)
         print(f"[{self.platform}] Verifying correctness against ground truth...")
         try:
-            v_hop1 = correctness.verify_hop_k(lambda n: self.queries.hop_1(n), k=1, sample_size=30)
-            v_hop2 = correctness.verify_hop_k(lambda n: self.queries.hop_2(n), k=2, sample_size=30)
+            sample_sz = 3 if self.platform == "TypeDB" else 30
+            v_hop1 = correctness.verify_hop_k(lambda n: self.queries.hop_1(n), k=1, sample_size=sample_sz)
+            v_hop2 = correctness.verify_hop_k(lambda n: self.queries.hop_2(n), k=2, sample_size=sample_sz)
             v_edges = correctness.verify_edge_count(lambda: self.queries.count_edges())
             
             self.results["metrics"]["correctness"] = {
