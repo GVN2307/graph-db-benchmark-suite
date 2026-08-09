@@ -124,7 +124,7 @@ All database servers were provisioned on their respective cloud providers' offic
 | **NetworkX** | 0.873s | 0.031s | 0.842s | Successfully Ingested |
 | **Neo4j Aura** | 48.211s | 1.253s | 46.958s | Successfully Ingested |
 | **FalkorDB** | 39.593s | 2.888s | 36.705s | Successfully Ingested |
-| **CognoDB** | N/A | N/A | N/A | Throttled / Skipped |
+| **CognoDB** | 12.589s | 4.894s | 7.695s | Downsampled to 10% for Stability |
 | **TypeDB** | N/A | N/A | N/A | Throttled / Skipped |
 
 ### 2. Multi-Hop Traversals (p50 / p95 Latency in ms)
@@ -133,7 +133,7 @@ All database servers were provisioned on their respective cloud providers' offic
 | **NetworkX** | 0.002 | 0.004 | 0.044 | 0.225 | 1.066 | 20.18 |
 | **Neo4j Aura** | 88.26 | 177.54 | 77.50 | 180.61 | 83.58 | 181.12 |
 | **FalkorDB** | 249.22 | 482.56 | 261.25 | 355.84 | 320.00 | 1898.50 |
-| **CognoDB** | N/A | N/A | N/A | N/A | N/A | N/A |
+| **CognoDB** | 272.64 | 375.30 | 296.19 | 437.76 | 320.00 | 429.06 |
 | **TypeDB** | N/A | N/A | N/A | N/A | N/A | N/A |
 
 ### 3. Point & Indexed Lookups (p50 / p95 Latency in ms)
@@ -142,7 +142,7 @@ All database servers were provisioned on their respective cloud providers' offic
 | **NetworkX** | 0.001 | 0.001 | 0.001 | 0.001 |
 | **Neo4j Aura** | 73.47 | 171.52 | 74.88 | 262.40 |
 | **FalkorDB** | 274.94 | 364.80 | 280.06 | 377.09 |
-| **CognoDB** | N/A | N/A | N/A | N/A |
+| **CognoDB** | 307.71 | 410.62 | 303.36 | 420.61 |
 | **TypeDB** | N/A | N/A | N/A | N/A |
 
 ### 4. Global Aggregations (p50 / p95 Latency in ms)
@@ -151,7 +151,7 @@ All database servers were provisioned on their respective cloud providers' offic
 | **NetworkX** | 0.003 | 0.009 | 5.24 | 23.58 |
 | **Neo4j Aura** | 73.47 | 121.92 | 74.50 | 152.96 |
 | **FalkorDB** | 257.92 | 377.34 | 257.92 | 359.94 |
-| **CognoDB** | N/A | N/A | N/A | N/A |
+| **CognoDB** | 278.02 | 411.14 | 270.34 | 393.73 |
 | **TypeDB** | N/A | N/A | N/A | N/A |
 
 ### 5. Mixed Workload (Concurrent Load Test)
@@ -160,7 +160,7 @@ All database servers were provisioned on their respective cloud providers' offic
 | **NetworkX** | 178760.8 | 0.003 | 0.007 | 0 |
 | **Neo4j Aura** | 22.4 | 76.26 | 129.01 | 0 |
 | **FalkorDB** | 3.8 | 535.11 | 816.58 | 0 |
-| **CognoDB** | N/A | N/A | N/A | N/A |
+| **CognoDB** | 6.1 | 279.52 | 457.23 | 0 |
 | **TypeDB** | N/A | N/A | N/A | N/A |
 
 ---
