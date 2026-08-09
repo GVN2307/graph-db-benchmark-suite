@@ -55,7 +55,7 @@ In the results tables below, you will see some entries marked as **N/A**. This m
 
 ### CognoDB and TypeDB at 50% and 100% Scales
 Free-tier cloud databases have very strict resource limits:
-- **CognoDB Free Tier** restricts the database to a maximum of 0.5GB of RAM. When we attempted to load the larger datasets (50% and 100%), the system ran out of memory (OOM) and throttled, forcing us to skip the tests to prevent database crashes.
+- **CognoDB Free Tier** restricts the database to a maximum of 0.5GB of RAM. At 50% load, the benchmark completed successfully. At 100% load, loading all 198,110 edges spammed the database beyond memory constraints and caused connection failures, so the suite automatically downsampled the CognoDB run to 10% scale for stability.
 - **TypeDB Free Tier** performs rigorous real-time checking of the data structure (making sure every node and connection adheres to its strict schema rules). At 50% and 100% scales, this checking became too resource-intensive for the free instance, resulting in connection timeouts and "503 Service Unavailable" errors from the cloud cluster.
 
 ### TypeDB 3-Hop Queries
@@ -67,6 +67,27 @@ All NebulaGraph tests are marked as N/A because the managed cloud endpoint was u
 ---
 
 ## System Architecture & Database Selection
+
+```mermaid
+graph TD
+    dataset[SNAP ca-AstroPh Dataset] --> parser[Data Parser and Deduplicator]
+    parser --> loader[Database Loaders]
+    loader --> cognodb[CognoDB Cloud]
+    loader --> neo4j[Neo4j AuraDB]
+    loader --> falkor[FalkorDB Cloud]
+    loader --> typedb[TypeDB Cloud]
+    loader --> networkx[NetworkX In-Memory]
+    
+    cognodb --> harness[Benchmark Harness]
+    neo4j --> harness
+    falkor --> harness
+    typedb --> harness
+    networkx --> harness
+    
+    harness --> results[Raw JSON Results]
+    results --> aggregator[Summary CSV and Dashboard Generator]
+    aggregator --> final[summary.csv and dashboard.html]
+```
 
 ### Selection Rationale
 - **Neo4j AuraDB:** The industry-standard native property graph database utilizing index-free adjacency.
@@ -204,6 +225,13 @@ All database servers were provisioned on their respective cloud providers' offic
 | **Neo4j Aura** | 13.756s | 1.967s | 11.789s | Successfully Ingested |
 | **TypeDB** | 0.000s | 0.000s | 0.000s | Pre-loaded in Memory |
 
+```mermaid
+pie title Relative Data Ingestion Duration at 10% Scale (Lower is Better)
+    "Neo4j Aura (13.76s)" : 13.76
+    "FalkorDB (5.94s)" : 5.94
+    "CognoDB (5.10s)" : 5.10
+```
+
 ### 2. Multi-Hop Traversals (p50 / p95 Latency in ms)
 | Platform | 1-Hop p50 | 1-Hop p95 | 2-Hop p50 | 2-Hop p95 | 3-Hop p50 | 3-Hop p95 |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -241,6 +269,14 @@ All database servers were provisioned on their respective cloud providers' offic
 | **CognoDB** | 5.2 | 407.10 | 506.03 | 0 |
 | **FalkorDB** | 3.4 | 585.08 | 1025.48 | 0 |
 | **TypeDB** | 2.0 | 1116.88 | 1128.74 | 0 |
+
+```mermaid
+pie title Concurrent Mixed Workload Throughput (QPS) at 10% Scale (Higher is Better)
+    "Neo4j Aura (17.0 QPS)" : 17.0
+    "CognoDB (5.2 QPS)" : 5.2
+    "FalkorDB (3.4 QPS)" : 3.4
+    "TypeDB (2.0 QPS)" : 2.0
+```
 
 ---
 

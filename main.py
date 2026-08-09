@@ -128,7 +128,11 @@ def main():
                 except Exception as copy_err:
                     print(f"[Main] Failed to copy {f_name} to results/10/: {copy_err}")
 
+    platform_filter = os.getenv("PLATFORM_FILTER")
     for name, LoaderClass, QueryClass in PLATFORMS:
+        if platform_filter and name != platform_filter:
+            continue
+
         if sample_percent == "10" and name != "NetworkX":
             print(f"[{name}] Skipping benchmark for 10% load: results already exist/skipped.")
             continue

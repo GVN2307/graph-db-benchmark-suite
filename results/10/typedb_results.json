@@ -16,25 +16,25 @@
             "ratio": 1.0
         },
         "1_hop_traversal": {
-            "p50_latency_ms": 1098.751,
-            "p95_latency_ms": 1331.199,
-            "mean_latency_ms": 1115.246,
-            "stddev_ms": 227.202,
+            "p50_latency_ms": 909.823,
+            "p95_latency_ms": 1127.423,
+            "mean_latency_ms": 950.707,
+            "stddev_ms": 103.698,
             "failures": 0,
             "confidence_interval_p95": [
-                1233.555,
-                1437.06
+                0,
+                0
             ]
         },
         "2_hop_traversal": {
-            "p50_latency_ms": 1126.399,
-            "p95_latency_ms": 1235.967,
-            "mean_latency_ms": 1102.582,
-            "stddev_ms": 99.286,
+            "p50_latency_ms": 885.759,
+            "p95_latency_ms": 1082.367,
+            "mean_latency_ms": 919.398,
+            "stddev_ms": 71.228,
             "failures": 0,
             "confidence_interval_p95": [
-                1228.659,
-                1311.549
+                0,
+                0
             ]
         },
         "3_hop_traversal": {
@@ -44,53 +44,53 @@
             "stddev_ms": "N/A",
             "failures": 100,
             "confidence_interval_p95": [
-                0,
-                0
+                0.0,
+                0.0
             ]
         },
         "point_lookup": {
-            "p50_latency_ms": 1096.703,
-            "p95_latency_ms": 1264.639,
+            "p50_latency_ms": 896.511,
+            "p95_latency_ms": 1084.415,
             "failures": 0
         },
         "indexed_lookup": {
-            "p50_latency_ms": 1116.159,
-            "p95_latency_ms": 1271.807,
+            "p50_latency_ms": 955.903,
+            "p95_latency_ms": 1116.159,
             "failures": 0
         },
         "count_nodes": {
-            "p50_latency_ms": 1026.559,
-            "p95_latency_ms": 1258.495,
+            "p50_latency_ms": 938.495,
+            "p95_latency_ms": 1067.007,
             "failures": 0
         },
         "count_edges": {
-            "p50_latency_ms": 1126.399,
-            "p95_latency_ms": 1238.015,
+            "p50_latency_ms": 959.487,
+            "p95_latency_ms": 1235.967,
             "failures": 0
         },
         "mixed_workload": {
-            "total_operations": 20,
-            "successful_operations": 20,
+            "total_operations": 23,
+            "successful_operations": 23,
             "failed_operations": 0,
-            "queries_per_second": 2.0,
-            "p50_latency_ms": 1116.884,
-            "p95_latency_ms": 1128.74
+            "queries_per_second": 2.3,
+            "p50_latency_ms": 904.571,
+            "p95_latency_ms": 959.962
         },
         "observability": {
-            "peak_cpu": 44.4,
-            "peak_mem_rss_mb": 222.3828125,
-            "avg_cpu": 12.725982623086471,
-            "total_net_sent_mb": 4.04,
-            "total_net_recv_mb": 2.296,
-            "duration_sec": 1334.001
+            "peak_cpu": 61.6,
+            "peak_mem_rss_mb": 85.27734375,
+            "avg_cpu": 21.758358662613983,
+            "total_net_sent_mb": 54.026,
+            "total_net_recv_mb": 12.947,
+            "duration_sec": 179.543
         },
         "cost": {
             "platform": "TypeDB",
-            "compute_cost_usd": 0.0556,
+            "compute_cost_usd": 0.0075,
             "storage_cost_usd": 1e-06,
-            "total_cost_usd": 0.0556,
-            "cost_per_1k_queries_usd": 0.0772,
-            "cost_per_million_queries_usd": 77.2
+            "total_cost_usd": 0.0075,
+            "cost_per_1k_queries_usd": 0.010348,
+            "cost_per_million_queries_usd": 10.35
         }
     }
 }
