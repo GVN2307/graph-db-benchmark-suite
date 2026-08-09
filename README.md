@@ -12,9 +12,10 @@ This suite provides a standardized harness to measure the performance, concurren
 4. **TypeDB Cloud** (Strongly-typed Polymorphic Entity-Relation - TypeQL)
 5. **NetworkX** (In-Memory Python Baseline - Native Python API)
 
-Benchmarks are executed at two main scales:
+Benchmarks are executed at three main scales:
 - **10% Sampled Load:** 12,132 nodes, 19,811 edges. Used for comparative baselines including TypeDB.
 - **50% Sampled Load:** 17,668 nodes, 99,055 edges. Used for testing limits of free instances without OOM limits.
+- **100% Load:** 18,772 nodes, 198,110 edges. Used for full scale evaluation of database limits.
 
 ---
 
@@ -44,6 +45,53 @@ All database servers were provisioned on their respective cloud providers' offic
 * **Scale 100%:** 18,772 unique authors (nodes), 198,110 collaboration links (edges).
 * **Scale 50%:** 17,668 nodes, 99,055 edges (sampled systematically using a step size of 2 on deduplicated edges).
 * **Scale 10%:** 12,132 nodes, 19,811 edges (sampled systematically using a step size of 10 on deduplicated edges).
+
+## 📈 Results Matrix: 100% Sampling (18,772 Nodes, 198,110 Edges)
+
+### 1. Data Ingestion Speed (100%)
+| Platform | Total Ingestion (s) | Node Ingestion (s) | Edge Ingestion (s) | Ingestion Status |
+| --- | --- | --- | --- | --- |
+| **NetworkX** | `0.873s` | `0.031s` | `0.842s` | Successfully Ingested |
+| **Neo4j Aura** | `48.211s` | `1.253s` | `46.958s` | Successfully Ingested |
+| **FalkorDB** | `39.593s` | `2.888s` | `36.705s` | Successfully Ingested |
+| **CognoDB** | `N/A` | `N/A` | `N/A` | Throttled / Skipped |
+| **TypeDB** | `N/A` | `N/A` | `N/A` | Throttled / Skipped |
+
+### 2. Multi-Hop Traversals (p50 / p95 Latency in ms)
+| Platform | 1-Hop p50 | 1-Hop p95 | 2-Hop p50 | 2-Hop p95 | 3-Hop p50 | 3-Hop p95 |
+| --- | --- | --- | --- | --- | --- | --- |
+| **NetworkX** | `0.002` | `0.004` | `0.044` | `0.225` | `1.066` | `20.18` |
+| **Neo4j Aura** | `88.26` | `177.54` | `77.50` | `180.61` | `83.58` | `181.12` |
+| **FalkorDB** | `249.22` | `482.56` | `261.25` | `355.84` | `320.00` | `1898.50` |
+| **CognoDB** | `N/A` | `N/A` | `N/A` | `N/A` | `N/A` | `N/A` |
+| **TypeDB** | `N/A` | `N/A` | `N/A` | `N/A` | `N/A` | `N/A` |
+
+### 3. Point & Indexed Lookups (p50 / p95 Latency in ms)
+| Platform | Point p50 | Point p95 | Indexed p50 | Indexed p95 |
+| --- | --- | --- | --- | --- |
+| **NetworkX** | `0.001` | `0.001` | `0.001` | `0.001` |
+| **Neo4j Aura** | `73.47` | `171.52` | `74.88` | `262.40` |
+| **FalkorDB** | `274.94` | `364.80` | `280.06` | `377.09` |
+| **CognoDB** | `N/A` | `N/A` | `N/A` | `N/A` |
+| **TypeDB** | `N/A` | `N/A` | `N/A` | `N/A` |
+
+### 4. Global Aggregations (p50 / p95 Latency in ms)
+| Platform | Node Count p50 | Node Count p95 | Edge Count p50 | Edge Count p95 |
+| --- | --- | --- | --- | --- |
+| **NetworkX** | `0.003` | `0.009` | `5.24` | `23.58` |
+| **Neo4j Aura** | `73.47` | `121.92` | `74.50` | `152.96` |
+| **FalkorDB** | `257.92` | `377.34` | `257.92` | `359.94` |
+| **CognoDB** | `N/A` | `N/A` | `N/A` | `N/A` |
+| **TypeDB** | `N/A` | `N/A` | `N/A` | `N/A` |
+
+### 5. Mixed Workload (Concurrent Load Test)
+| Platform | QPS | p50 Latency (ms) | p95 Latency (ms) | Failures |
+| --- | --- | --- | --- | --- |
+| **NetworkX** | `178760.8` | `0.003` | `0.007` | `0` |
+| **Neo4j Aura** | `22.4` | `76.26` | `129.01` | `0` |
+| **FalkorDB** | `3.8` | `535.11` | `816.58` | `0` |
+| **CognoDB** | `N/A` | `N/A` | `N/A` | `N/A` |
+| **TypeDB** | `N/A` | `N/A` | `N/A` | `N/A` |
 
 ---
 

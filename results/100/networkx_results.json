@@ -1,0 +1,96 @@
+{
+    "platform": "NetworkX",
+    "metrics": {
+        "data_loading": {
+            "total_load_time_sec": 0.872,
+            "node_load_time_sec": 0.031,
+            "edge_load_time_sec": 0.842,
+            "node_throughput_nodes_sec": 611400.077,
+            "edge_throughput_edges_sec": 235372.699
+        },
+        "correctness": {
+            "1_hop_verified": false,
+            "2_hop_verified": false,
+            "edge_count_expected": 198110,
+            "edge_count_actual": 198110,
+            "ratio": 1.0
+        },
+        "1_hop_traversal": {
+            "p50_latency_ms": 0.002,
+            "p95_latency_ms": 0.004,
+            "mean_latency_ms": 0.003,
+            "stddev_ms": 0.006,
+            "failures": 0,
+            "confidence_interval_p95": [
+                0.003,
+                0.021
+            ]
+        },
+        "2_hop_traversal": {
+            "p50_latency_ms": 0.044,
+            "p95_latency_ms": 0.225,
+            "mean_latency_ms": 0.074,
+            "stddev_ms": 0.072,
+            "failures": 0,
+            "confidence_interval_p95": [
+                0.187,
+                0.251
+            ]
+        },
+        "3_hop_traversal": {
+            "p50_latency_ms": 1.066,
+            "p95_latency_ms": 20.175,
+            "mean_latency_ms": 4.606,
+            "stddev_ms": 14.779,
+            "failures": 0,
+            "confidence_interval_p95": [
+                5.77,
+                45.913
+            ]
+        },
+        "point_lookup": {
+            "p50_latency_ms": 0.001,
+            "p95_latency_ms": 0.001,
+            "failures": 0
+        },
+        "indexed_lookup": {
+            "p50_latency_ms": 0.001,
+            "p95_latency_ms": 0.001,
+            "failures": 0
+        },
+        "count_nodes": {
+            "p50_latency_ms": 0.003,
+            "p95_latency_ms": 0.009,
+            "failures": 0
+        },
+        "count_edges": {
+            "p50_latency_ms": 5.243,
+            "p95_latency_ms": 23.583,
+            "failures": 0
+        },
+        "mixed_workload": {
+            "total_operations": 1787611,
+            "successful_operations": 1787608,
+            "failed_operations": 3,
+            "queries_per_second": 178760.8,
+            "p50_latency_ms": 0.003,
+            "p95_latency_ms": 0.007
+        },
+        "observability": {
+            "peak_cpu": 36.5,
+            "peak_mem_rss_mb": 484.65625,
+            "avg_cpu": 24.217142857142857,
+            "total_net_sent_mb": 1811.268,
+            "total_net_recv_mb": 265.229,
+            "duration_sec": 22.896
+        },
+        "cost": {
+            "platform": "NetworkX",
+            "compute_cost_usd": 0.0,
+            "storage_cost_usd": 0.0,
+            "total_cost_usd": 0.0,
+            "cost_per_1k_queries_usd": 0.0,
+            "cost_per_million_queries_usd": 0.0
+        }
+    }
+}

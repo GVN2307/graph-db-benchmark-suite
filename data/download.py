@@ -39,20 +39,80 @@ def download_and_extract():
         line_count = sum(1 for _ in f)
     print(f"Dataset has {line_count} lines (including comments).")
 
-def parse_dataset():
+def pre_split_datasets():
+    import shutil
+    data_dir = os.path.dirname(os.path.abspath(__file__))
+    
+    # Check if all files exist
+    files_exist = True
+    for pct in (10, 50, 100):
+        filepath = os.path.join(data_dir, f"ca-AstroPh_{pct}.txt")
+        if not os.path.exists(filepath):
+            files_exist = False
+            break
+            
+    if files_exist:
+        return
+        
+    print("Pre-splitting datasets for 10%, 50%, and 100% loads...")
+    txt_file = os.path.join(data_dir, "ca-AstroPh.txt")
+    if not os.path.exists(txt_file):
+        download_and_extract()
+        
+    # Parse edges (same as original parse_dataset)
+    unique_edges = set()
+    with open(txt_file, 'r') as f:
+        for line in f:
+            if line.startswith('#') or not line.strip():
+                continue
+            parts = line.strip().split()
+            if len(parts) >= 2:
+                u, v = int(parts[0]), int(parts[1])
+                # Deduplicate undirected edge
+                edge_pair = (min(u, v), max(u, v))
+                unique_edges.add(edge_pair)
+                
+    sorted_edges = sorted(unique_edges)
+    
+    for pct in (10, 50, 100):
+        filepath = os.path.join(data_dir, f"ca-AstroPh_{pct}.txt")
+        if pct == 100:
+            sampled = sorted_edges
+        else:
+            step = max(1, int(100 / pct))
+            sampled = sorted_edges[::step]
+            
+        print(f"Writing {len(sampled)} edges to {filepath}...")
+        with open(filepath, 'w') as out_f:
+            out_f.write(f"# Sampled AstroPh dataset at {pct}% load\n")
+            for u, v in sampled:
+                out_f.write(f"{u} {v}\n")
+                
+    print("Pre-splitting completed successfully.")
+
+def parse_dataset(sample_percent=100):
     """
     Parses the dataset and returns a tuple of (nodes, edges).
     Nodes is a list of dicts: [{'id': int, 'label': 'Author'}]
     Edges is a list of dicts: [{'source': int, 'target': int, 'type': 'COLLABORATES'}]
     """
-    if not os.path.exists(TXT_FILE):
-        download_and_extract()
-
+    try:
+        pct = int(sample_percent)
+    except ValueError:
+        pct = 100
+    if pct not in (10, 50, 100):
+        pct = 100
+        
+    pre_split_datasets()
+    
+    data_dir = os.path.dirname(os.path.abspath(__file__))
+    txt_file = os.path.join(data_dir, f"ca-AstroPh_{pct}.txt")
+    
     unique_nodes = set()
     unique_edges = set()
-
-    print("Parsing dataset file...")
-    with open(TXT_FILE, 'r') as f:
+    
+    print(f"Parsing split dataset file: {txt_file}...")
+    with open(txt_file, 'r') as f:
         for line in f:
             if line.startswith('#') or not line.strip():
                 continue
@@ -64,12 +124,14 @@ def parse_dataset():
                 # Deduplicate undirected edge
                 edge_pair = (min(u, v), max(u, v))
                 unique_edges.add(edge_pair)
-
+                
     nodes = [{"id": node_id, "label": "Author"} for node_id in sorted(unique_nodes)]
     edges = [{"source": e[0], "target": e[1], "type": "COLLABORATES"} for e in sorted(unique_edges)]
     
-    print(f"Parsed {len(nodes)} unique nodes and {len(edges)} edges.")
+    print(f"Parsed {len(nodes)} unique nodes and {len(edges)} edges for {pct}% load.")
     return nodes, edges
 
 if __name__ == "__main__":
     download_and_extract()
+    pre_split_datasets()
+

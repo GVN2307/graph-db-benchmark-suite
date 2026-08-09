@@ -1,0 +1,96 @@
+{
+    "platform": "Neo4jAura",
+    "metrics": {
+        "data_loading": {
+            "total_load_time_sec": 48.211,
+            "node_load_time_sec": 1.253,
+            "edge_load_time_sec": 46.958,
+            "node_throughput_nodes_sec": 14981.406,
+            "edge_throughput_edges_sec": 4218.873
+        },
+        "correctness": {
+            "1_hop_verified": true,
+            "2_hop_verified": true,
+            "edge_count_expected": 198110,
+            "edge_count_actual": 198110,
+            "ratio": 1.0
+        },
+        "1_hop_traversal": {
+            "p50_latency_ms": 88.255,
+            "p95_latency_ms": 177.535,
+            "mean_latency_ms": 102.8,
+            "stddev_ms": 58.969,
+            "failures": 0,
+            "confidence_interval_p95": [
+                125.514,
+                322.775
+            ]
+        },
+        "2_hop_traversal": {
+            "p50_latency_ms": 77.503,
+            "p95_latency_ms": 180.607,
+            "mean_latency_ms": 110.4,
+            "stddev_ms": 139.837,
+            "failures": 0,
+            "confidence_interval_p95": [
+                121.7,
+                723.218
+            ]
+        },
+        "3_hop_traversal": {
+            "p50_latency_ms": 83.583,
+            "p95_latency_ms": 181.119,
+            "mean_latency_ms": 109.96,
+            "stddev_ms": 93.601,
+            "failures": 0,
+            "confidence_interval_p95": [
+                147.62,
+                571.32
+            ]
+        },
+        "point_lookup": {
+            "p50_latency_ms": 73.471,
+            "p95_latency_ms": 171.519,
+            "failures": 0
+        },
+        "indexed_lookup": {
+            "p50_latency_ms": 74.879,
+            "p95_latency_ms": 262.399,
+            "failures": 0
+        },
+        "count_nodes": {
+            "p50_latency_ms": 73.471,
+            "p95_latency_ms": 121.919,
+            "failures": 0
+        },
+        "count_edges": {
+            "p50_latency_ms": 74.495,
+            "p95_latency_ms": 152.959,
+            "failures": 0
+        },
+        "mixed_workload": {
+            "total_operations": 224,
+            "successful_operations": 224,
+            "failed_operations": 0,
+            "queries_per_second": 22.4,
+            "p50_latency_ms": 76.258,
+            "p95_latency_ms": 129.01
+        },
+        "observability": {
+            "peak_cpu": 56.2,
+            "peak_mem_rss_mb": 439.64453125,
+            "avg_cpu": 21.54416403785489,
+            "total_net_sent_mb": 12750.87,
+            "total_net_recv_mb": 2168.695,
+            "duration_sec": 179.238
+        },
+        "cost": {
+            "platform": "Neo4jAura",
+            "compute_cost_usd": 0.009,
+            "storage_cost_usd": 1e-06,
+            "total_cost_usd": 0.009,
+            "cost_per_1k_queries_usd": 0.0097,
+            "cost_per_million_queries_usd": 9.7
+        }
+    }
+}

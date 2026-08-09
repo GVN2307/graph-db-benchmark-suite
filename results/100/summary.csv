@@ -1,0 +1,5 @@
+Platform,Node Load Time (s),Edge Load Time (s),1-Hop p50 (ms),1-Hop p95 (ms),2-Hop p50 (ms),2-Hop p95 (ms),3-Hop p50 (ms),3-Hop p95 (ms),Point Lookup p50 (ms),Point Lookup p95 (ms),Indexed Lookup p50 (ms),Indexed Lookup p95 (ms),Count Nodes p50 (ms),Count Nodes p95 (ms),Count Edges p50 (ms),Count Edges p95 (ms),Concurrent QPS,Concurrent p50 (ms),Concurrent p95 (ms)
+FalkorDB,2.888,36.705,249.215,482.559,261.247,355.839,319.999,1898.495,274.943,364.799,280.063,377.087,257.919,377.343,257.919,359.935,3.8,535.11,816.584
+Neo4jAura,1.253,46.958,88.255,177.535,77.503,180.607,83.583,181.119,73.471,171.519,74.879,262.399,73.471,121.919,74.495,152.959,22.4,76.258,129.01
+NetworkX,0.031,0.842,0.002,0.004,0.044,0.225,1.066,20.175,0.001,0.001,0.001,0.001,0.003,0.009,5.243,23.583,178760.8,0.003,0.007
+TypeDB,N/A,N/A,N/A,N/A,N/A,N/A,N/A,N/A,N/A,N/A,N/A,N/A,N/A,N/A,N/A,N/A,N/A,N/A,N/A
