@@ -1,0 +1,96 @@
+{
+    "platform": "CognoDB",
+    "metrics": {
+        "data_loading": {
+            "total_load_time_sec": 5.103,
+            "node_load_time_sec": 2.863,
+            "edge_load_time_sec": 2.24,
+            "node_throughput_nodes_sec": 4237.236,
+            "edge_throughput_edges_sec": 8844.91
+        },
+        "correctness": {
+            "1_hop_verified": false,
+            "2_hop_verified": true,
+            "edge_count_expected": 19811,
+            "edge_count_actual": 19811,
+            "ratio": 1.0
+        },
+        "1_hop_traversal": {
+            "p50_latency_ms": 308.735,
+            "p95_latency_ms": 419.839,
+            "mean_latency_ms": 348.757,
+            "stddev_ms": 58.042,
+            "failures": 0,
+            "confidence_interval_p95": [
+                410.303,
+                510.245
+            ]
+        },
+        "2_hop_traversal": {
+            "p50_latency_ms": 396.031,
+            "p95_latency_ms": 417.791,
+            "mean_latency_ms": 365.093,
+            "stddev_ms": 60.571,
+            "failures": 0,
+            "confidence_interval_p95": [
+                410.756,
+                448.595
+            ]
+        },
+        "3_hop_traversal": {
+            "p50_latency_ms": 357.887,
+            "p95_latency_ms": 422.655,
+            "mean_latency_ms": 359.459,
+            "stddev_ms": 52.513,
+            "failures": 0,
+            "confidence_interval_p95": [
+                412.182,
+                428.268
+            ]
+        },
+        "point_lookup": {
+            "p50_latency_ms": 322.815,
+            "p95_latency_ms": 431.871,
+            "failures": 0
+        },
+        "indexed_lookup": {
+            "p50_latency_ms": 316.927,
+            "p95_latency_ms": 437.503,
+            "failures": 0
+        },
+        "count_nodes": {
+            "p50_latency_ms": 374.527,
+            "p95_latency_ms": 637.951,
+            "failures": 0
+        },
+        "count_edges": {
+            "p50_latency_ms": 373.759,
+            "p95_latency_ms": 439.295,
+            "failures": 0
+        },
+        "mixed_workload": {
+            "total_operations": 52,
+            "successful_operations": 52,
+            "failed_operations": 0,
+            "queries_per_second": 5.2,
+            "p50_latency_ms": 407.103,
+            "p95_latency_ms": 506.03
+        },
+        "observability": {
+            "peak_cpu": 70.4,
+            "peak_mem_rss_mb": 211.71484375,
+            "avg_cpu": 14.786717752234994,
+            "total_net_sent_mb": 6.757,
+            "total_net_recv_mb": 1.591,
+            "duration_sec": 477.758
+        },
+        "cost": {
+            "platform": "CognoDB",
+            "compute_cost_usd": 0.0159,
+            "storage_cost_usd": 1e-06,
+            "total_cost_usd": 0.0159,
+            "cost_per_1k_queries_usd": 0.021178,
+            "cost_per_million_queries_usd": 21.18
+        }
+    }
+}

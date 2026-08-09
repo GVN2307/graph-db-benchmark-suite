@@ -1,21 +1,23 @@
 import os
+import sys
 import csv
 import json
 import socket
 from dotenv import load_dotenv
 
-# Set default socket timeout globally to prevent infinite hangs on defunct connections
-socket.setdefaulttimeout(15.0)
+# Set default socket timeout globally to prevent infinite hangs on defunct connections,
+# but make it large enough to handle queue delays under concurrent stress testing on free tiers.
+socket.setdefaulttimeout(180.0)
 
 from loaders.cognodb_loader import CognoDBLoader
 from loaders.neo4j_loader import Neo4jLoader
 from loaders.falkordb_loader import FalkorDBLoader
 from loaders.typedb_loader import TypeDBLoader
-from loaders.nebula_loader import NebulaLoader
+from loaders.networkx_loader import NetworkXLoader
 
 from queries.cypher_queries import CypherQuerySet
 from queries.typedb_queries import TypeDBQuerySet
-from queries.nebula_queries import NebulaQuerySet
+from queries.networkx_queries import NetworkXQuerySet
 
 from benchmark.harness import BenchmarkHarness
 
@@ -24,17 +26,18 @@ load_dotenv()
 PLATFORMS = [
     ("CognoDB", CognoDBLoader, CypherQuerySet),
     ("FalkorDB", FalkorDBLoader, CypherQuerySet),
-    ("NebulaGraph", NebulaLoader, NebulaQuerySet),
+    ("NetworkX", NetworkXLoader, NetworkXQuerySet),
     ("Neo4jAura", Neo4jLoader, CypherQuerySet),
     ("TypeDB", TypeDBLoader, TypeDBQuerySet),
 ]
 
 def generate_summary():
-    results_dir = "results"
+    sample_percent = os.getenv("SAMPLE_PERCENT", "100")
+    results_dir = os.path.join("results", sample_percent)
     summary_path = os.path.join(results_dir, "summary.csv")
     
     if not os.path.exists(results_dir):
-        print("No results directory found.")
+        print(f"No results directory found at {results_dir}.")
         return
         
     data = []
@@ -104,11 +107,49 @@ def generate_summary():
     print(f"Generated comparison matrix at: {summary_path}")
 
 def main():
+    sample_percent = os.getenv("SAMPLE_PERCENT", "100")
     print("==================================================")
     print("Graph Database Cloud Benchmark Suite starting...")
+    print(f"Dataset Sampling Configuration: {sample_percent}%")
     print("==================================================")
     
+    # If running at 10% load, copy existing results for other databases to results/10/
+    if sample_percent == "10":
+        import shutil
+        dest_dir = os.path.join("results", "10")
+        os.makedirs(dest_dir, exist_ok=True)
+        for f_name in ["cognodb_results.json", "falkordb_results.json", "neo4jaura_results.json", "typedb_results.json"]:
+            src = os.path.join("results", f_name)
+            dst = os.path.join(dest_dir, f_name)
+            if os.path.exists(src) and not os.path.exists(dst):
+                try:
+                    shutil.copy2(src, dst)
+                    print(f"[Main] Copied existing 10% results for {f_name} to results/10/")
+                except Exception as copy_err:
+                    print(f"[Main] Failed to copy {f_name} to results/10/: {copy_err}")
+
     for name, LoaderClass, QueryClass in PLATFORMS:
+        if sample_percent == "10" and name != "NetworkX":
+            print(f"[{name}] Skipping benchmark for 10% load: results already exist/skipped.")
+            continue
+
+        if name == "TypeDB" and sys.version_info >= (3, 14):
+            print(f"[{name}] Skipping benchmark: TypeDB driver is incompatible with Python 3.14+ (Rust FFI panic).")
+            results_dir = os.path.join("results", sample_percent)
+            if not os.path.exists(results_dir):
+                os.makedirs(results_dir)
+            filepath = os.path.join(results_dir, f"typedb_results.json")
+            dummy_res = {
+                "platform": "TypeDB",
+                "metrics": {
+                    "error": "Skipped: typedb-driver incompatible with Python 3.14+"
+                }
+            }
+            with open(filepath, "w") as f:
+                json.dump(dummy_res, f, indent=4)
+            continue
+
+        loader = None
         try:
             loader = LoaderClass()
             queries = QueryClass(loader)
@@ -116,12 +157,24 @@ def main():
             harness.run_all()
         except Exception as e:
             print(f"[{name}] Fatal error running benchmark for {name}: {e}")
+        finally:
+            if loader:
+                try:
+                    loader.close()
+                except Exception as close_err:
+                    print(f"[{name}] Warning: Failed to close loader: {close_err}")
     
     print("\n==================================================")
     print("Generating aggregate results...")
     print("==================================================")
     generate_summary()
     print("All benchmarks finished.")
+    
+    # Flush stdio and force exit to bypass any hanging background socket or driver threads
+    sys.stdout.flush()
+    sys.stderr.flush()
+    os._exit(0)
+
 
 if __name__ == "__main__":
     main()
