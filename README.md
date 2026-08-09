@@ -56,7 +56,8 @@ In the results tables below, you will see some entries marked as **N/A**. This m
 ### CognoDB and TypeDB at 50% and 100% Scales
 Free-tier cloud databases have very strict resource limits:
 - **CognoDB Free Tier** restricts the database to a maximum of 0.5GB of RAM. At 50% load, the benchmark completed successfully. At 100% load, loading all 198,110 edges spammed the database beyond memory constraints and caused connection failures, so the suite automatically downsampled the CognoDB run to 10% scale for stability.
-- **TypeDB Free Tier** performs rigorous real-time checking of the data structure (making sure every node and connection adheres to its strict schema rules). At 50% and 100% scales, this checking became too resource-intensive for the free instance, resulting in connection timeouts and "503 Service Unavailable" errors from the cloud cluster.
+- **TypeDB Free Tier** was successfully benchmarked at 10%, 50%, and 100% scales after resolving port routing configurations (connecting to port 1729 with TLS enabled).
+
 
 ### TypeDB 3-Hop Queries
 Tracing connections three levels deep (friends of friends of friends) is mathematically complex. TypeDB's query engine attempts to resolve all potential paths while validating its semantic rules. On the free tier, this process exceeds the timeout thresholds (taking too long to respond), so the suite marks it as N/A to prevent the benchmark from hanging indefinitely.
@@ -125,7 +126,7 @@ All database servers were provisioned on their respective cloud providers' offic
 | **Neo4j Aura** | 48.211s | 1.253s | 46.958s | Successfully Ingested |
 | **FalkorDB** | 39.593s | 2.888s | 36.705s | Successfully Ingested |
 | **CognoDB** | 12.589s | 4.894s | 7.695s | Downsampled to 10% for Stability |
-| **TypeDB** | N/A | N/A | N/A | Throttled / Skipped |
+| **TypeDB** | 112.123s | 23.057s | 89.066s | Successfully Ingested |
 
 ### 2. Multi-Hop Traversals (p50 / p95 Latency in ms)
 | Platform | 1-Hop p50 | 1-Hop p95 | 2-Hop p50 | 2-Hop p95 | 3-Hop p50 | 3-Hop p95 |
@@ -134,7 +135,7 @@ All database servers were provisioned on their respective cloud providers' offic
 | **Neo4j Aura** | 88.26 | 177.54 | 77.50 | 180.61 | 83.58 | 181.12 |
 | **FalkorDB** | 249.22 | 482.56 | 261.25 | 355.84 | 320.00 | 1898.50 |
 | **CognoDB** | 272.64 | 375.30 | 296.19 | 437.76 | 320.00 | 429.06 |
-| **TypeDB** | N/A | N/A | N/A | N/A | N/A | N/A |
+| **TypeDB** | 995.33 | 1202.18 | 948.22 | 1076.22 | N/A* | N/A* |
 
 ### 3. Point & Indexed Lookups (p50 / p95 Latency in ms)
 | Platform | Point p50 | Point p95 | Indexed p50 | Indexed p95 |
@@ -143,7 +144,7 @@ All database servers were provisioned on their respective cloud providers' offic
 | **Neo4j Aura** | 73.47 | 171.52 | 74.88 | 262.40 |
 | **FalkorDB** | 274.94 | 364.80 | 280.06 | 377.09 |
 | **CognoDB** | 307.71 | 410.62 | 303.36 | 420.61 |
-| **TypeDB** | N/A | N/A | N/A | N/A |
+| **TypeDB** | 942.59 | 1220.61 | 951.30 | 1110.02 |
 
 ### 4. Global Aggregations (p50 / p95 Latency in ms)
 | Platform | Node Count p50 | Node Count p95 | Edge Count p50 | Edge Count p95 |
@@ -152,7 +153,7 @@ All database servers were provisioned on their respective cloud providers' offic
 | **Neo4j Aura** | 73.47 | 121.92 | 74.50 | 152.96 |
 | **FalkorDB** | 257.92 | 377.34 | 257.92 | 359.94 |
 | **CognoDB** | 278.02 | 411.14 | 270.34 | 393.73 |
-| **TypeDB** | N/A | N/A | N/A | N/A |
+| **TypeDB** | 927.23 | 1136.64 | 1443.84 | 1655.81 |
 
 ### 5. Mixed Workload (Concurrent Load Test)
 | Platform | QPS | p50 Latency (ms) | p95 Latency (ms) | Failures |
@@ -161,7 +162,7 @@ All database servers were provisioned on their respective cloud providers' offic
 | **Neo4j Aura** | 22.4 | 76.26 | 129.01 | 0 |
 | **FalkorDB** | 3.8 | 535.11 | 816.58 | 0 |
 | **CognoDB** | 6.1 | 279.52 | 457.23 | 0 |
-| **TypeDB** | N/A | N/A | N/A | N/A |
+| **TypeDB** | 2.2 | 957.43 | 1024.74 | 0 |
 
 ---
 
@@ -174,7 +175,7 @@ All database servers were provisioned on their respective cloud providers' offic
 | **Neo4j Aura** | 23.901s | 1.195s | 22.706s | Successfully Ingested |
 | **CognoDB** | 0.000s | 0.000s | 0.000s | Pre-loaded in Memory |
 | **FalkorDB** | 0.000s | 0.000s | 0.000s | Pre-loaded in Memory |
-| **TypeDB** | N/A | N/A | N/A | Throttled / Skipped |
+| **TypeDB** | 64.884s | 22.424s | 42.460s | Successfully Ingested |
 
 ### 2. Multi-Hop Traversals (p50 / p95 Latency in ms)
 | Platform | 1-Hop p50 | 1-Hop p95 | 2-Hop p50 | 2-Hop p95 | 3-Hop p50 | 3-Hop p95 |
@@ -183,7 +184,7 @@ All database servers were provisioned on their respective cloud providers' offic
 | **Neo4j Aura** | 74.82 | 106.75 | 79.04 | 167.68 | 80.90 | 101.50 |
 | **CognoDB** | 319.23 | 460.03 | 318.98 | 422.40 | 366.85 | 1627.14 |
 | **FalkorDB** | 280.83 | 377.34 | 311.04 | 409.86 | 321.02 | 710.66 |
-| **TypeDB** | N/A | N/A | N/A | N/A | N/A | N/A |
+| **TypeDB** | 1006.59 | 1212.42 | 952.83 | 1045.50 | N/A* | N/A* |
 
 ### 3. Point & Indexed Lookups (p50 / p95 Latency in ms)
 | Platform | Point p50 | Point p95 | Indexed p50 | Indexed p95 |
@@ -192,7 +193,7 @@ All database servers were provisioned on their respective cloud providers' offic
 | **Neo4j Aura** | 75.78 | 110.02 | 76.35 | 93.44 |
 | **CognoDB** | 307.46 | 410.11 | 316.42 | 416.77 |
 | **FalkorDB** | 318.72 | 496.38 | 312.32 | 388.35 |
-| **TypeDB** | N/A | N/A | N/A | N/A |
+| **TypeDB** | 946.69 | 1228.80 | 959.99 | 1097.73 |
 
 ### 4. Global Aggregations (p50 / p95 Latency in ms)
 | Platform | Node Count p50 | Node Count p95 | Edge Count p50 | Edge Count p95 |
@@ -201,7 +202,7 @@ All database servers were provisioned on their respective cloud providers' offic
 | **Neo4j Aura** | 92.54 | 157.31 | 100.29 | 133.50 |
 | **CognoDB** | 319.49 | 418.05 | 310.78 | 513.28 |
 | **FalkorDB** | 311.55 | 388.10 | 313.60 | 393.22 |
-| **TypeDB** | N/A | N/A | N/A | N/A |
+| **TypeDB** | 970.75 | 1120.26 | 1101.82 | 1274.88 |
 
 ### 5. Mixed Workload (Concurrent Load Test)
 | Platform | QPS | p50 Latency (ms) | p95 Latency (ms) | Failures |
@@ -210,7 +211,7 @@ All database servers were provisioned on their respective cloud providers' offic
 | **Neo4j Aura** | 23.7 | 77.41 | 106.03 | 0 |
 | **CognoDB** | 5.8 | 309.99 | 496.14 | 0 |
 | **FalkorDB** | 3.6 | 574.90 | 671.74 | 0 |
-| **TypeDB** | N/A | N/A | N/A | N/A |
+| **TypeDB** | 2.4 | 864.49 | 996.62 | 0 |
 
 ---
 
@@ -239,7 +240,7 @@ pie title Relative Data Ingestion Duration at 10% Scale (Lower is Better)
 | **Neo4j Aura** | 102.59 | 237.44 | 102.78 | 281.09 | 102.98 | 175.62 |
 | **CognoDB** | 308.74 | 419.84 | 396.03 | 417.79 | 357.89 | 422.66 |
 | **FalkorDB** | 307.46 | 410.62 | 307.97 | 410.62 | 313.86 | 414.98 |
-| **TypeDB** | 1098.75 | 1331.20 | 1126.40 | 1235.97 | N/A* | N/A* |
+| **TypeDB** | 909.82 | 1127.42 | 885.76 | 1082.37 | N/A* | N/A* |
 
 *Note: TypeDB 3-hop query was skipped due to timeout thresholds.*
 
@@ -250,7 +251,7 @@ pie title Relative Data Ingestion Duration at 10% Scale (Lower is Better)
 | **Neo4j Aura** | 102.66 | 177.79 | 102.59 | 179.71 |
 | **CognoDB** | 322.82 | 431.87 | 316.93 | 437.50 |
 | **FalkorDB** | 307.46 | 416.00 | 307.20 | 409.86 |
-| **TypeDB** | 1096.70 | 1264.64 | 1116.16 | 1271.81 |
+| **TypeDB** | 896.51 | 1084.42 | 955.90 | 1116.16 |
 
 ### 4. Global Aggregations (p50 / p95 Latency in ms)
 | Platform | Node Count p50 | Node Count p95 | Edge Count p50 | Edge Count p95 |
@@ -259,7 +260,7 @@ pie title Relative Data Ingestion Duration at 10% Scale (Lower is Better)
 | **Neo4j Aura** | 102.40 | 153.34 | 102.53 | 166.27 |
 | **CognoDB** | 374.53 | 637.95 | 373.76 | 439.30 |
 | **FalkorDB** | 307.20 | 410.62 | 307.46 | 414.46 |
-| **TypeDB** | 1026.56 | 1258.50 | 1126.40 | 1238.02 |
+| **TypeDB** | 938.50 | 1067.01 | 959.49 | 1235.97 |
 
 ### 5. Mixed Workload (Concurrent Load Test)
 | Platform | QPS | p50 Latency (ms) | p95 Latency (ms) | Failures |
@@ -268,7 +269,7 @@ pie title Relative Data Ingestion Duration at 10% Scale (Lower is Better)
 | **Neo4j Aura** | 17.0 | 102.69 | 171.89 | 0 |
 | **CognoDB** | 5.2 | 407.10 | 506.03 | 0 |
 | **FalkorDB** | 3.4 | 585.08 | 1025.48 | 0 |
-| **TypeDB** | 2.0 | 1116.88 | 1128.74 | 0 |
+| **TypeDB** | 2.3 | 904.57 | 959.96 | 0 |
 
 ```mermaid
 pie title Concurrent Mixed Workload Throughput (QPS) at 10% Scale (Higher is Better)
