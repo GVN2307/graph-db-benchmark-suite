@@ -51,7 +51,7 @@ class CognoDBLoader(BaseGraphLoader):
 
     def load_nodes(self, nodes):
         print(f"[{self.name}] Starting node loading of {len(nodes)} nodes...")
-        batch_size = 5000
+        batch_size = 1000
         for i in range(0, len(nodes), batch_size):
             batch = nodes[i:i+batch_size]
             with self.driver.session() as session:
@@ -59,11 +59,12 @@ class CognoDBLoader(BaseGraphLoader):
                     "UNWIND $batch AS row CREATE (n:Author {id: row.id})",
                     batch=batch
                 )
+            time.sleep(0.05)
         print(f"[{self.name}] Finished loading nodes.")
 
     def load_edges(self, edges):
         print(f"[{self.name}] Starting edge loading of {len(edges)} edges...")
-        batch_size = 5000
+        batch_size = 1000
         for i in range(0, len(edges), batch_size):
             batch = edges[i:i+batch_size]
             with self.driver.session() as session:
@@ -76,6 +77,7 @@ class CognoDBLoader(BaseGraphLoader):
                     """,
                     batch=batch
                 )
+            time.sleep(0.05)
         print(f"[{self.name}] Finished loading edges.")
 
     def clear_data(self):

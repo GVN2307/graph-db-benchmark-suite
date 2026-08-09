@@ -1,4 +1,5 @@
 import os
+import time
 from dotenv import load_dotenv
 from typedb.driver import TypeDB, Credentials, DriverOptions, DriverTlsConfig, TransactionType
 from loaders.base_loader import BaseGraphLoader

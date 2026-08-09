@@ -4,6 +4,29 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import plotly.offline as op
 
+def get_nested(dct, *keys, default=0.0):
+    for key in keys:
+        if isinstance(dct, dict) and key in dct:
+            dct = dct[key]
+        else:
+            return default
+    return dct
+
+def safe_float(val):
+    try:
+        return float(val)
+    except (ValueError, TypeError):
+        return 0.0
+
+def safe_fmt(val, fmt=".2f"):
+    if isinstance(val, (int, float)):
+        return f"{val:{fmt}}"
+    try:
+        fval = float(val)
+        return f"{fval:{fmt}}"
+    except (ValueError, TypeError):
+        return str(val)
+
 def generate_dashboard(results_dir="results", output_path="results/dashboard.html"):
     # Load all json result files in directory
     files = [f for f in os.listdir(results_dir) if f.endswith("_results.json")]
@@ -28,29 +51,29 @@ def generate_dashboard(results_dir="results", output_path="results/dashboard.htm
     platforms = sorted(list(platforms_data.keys()))
     
     # 1. Loading times
-    node_load = [platforms_data[p]["metrics"]["data_loading"]["node_load_time_sec"] for p in platforms]
-    edge_load = [platforms_data[p]["metrics"]["data_loading"]["edge_load_time_sec"] for p in platforms]
+    node_load = [safe_float(get_nested(platforms_data[p], "metrics", "data_loading", "node_load_time_sec")) for p in platforms]
+    edge_load = [safe_float(get_nested(platforms_data[p], "metrics", "data_loading", "edge_load_time_sec")) for p in platforms]
     
     # 2. Traversals p50 & p95
-    hop1_p50 = [platforms_data[p]["metrics"]["1_hop_traversal"]["p50_latency_ms"] for p in platforms]
-    hop1_p95 = [platforms_data[p]["metrics"]["1_hop_traversal"]["p95_latency_ms"] for p in platforms]
+    hop1_p50 = [safe_float(get_nested(platforms_data[p], "metrics", "1_hop_traversal", "p50_latency_ms")) for p in platforms]
+    hop1_p95 = [safe_float(get_nested(platforms_data[p], "metrics", "1_hop_traversal", "p95_latency_ms")) for p in platforms]
     
-    hop2_p50 = [platforms_data[p]["metrics"]["2_hop_traversal"]["p50_latency_ms"] for p in platforms]
-    hop2_p95 = [platforms_data[p]["metrics"]["2_hop_traversal"]["p95_latency_ms"] for p in platforms]
+    hop2_p50 = [safe_float(get_nested(platforms_data[p], "metrics", "2_hop_traversal", "p50_latency_ms")) for p in platforms]
+    hop2_p95 = [safe_float(get_nested(platforms_data[p], "metrics", "2_hop_traversal", "p95_latency_ms")) for p in platforms]
     
-    hop3_p50 = [platforms_data[p]["metrics"]["3_hop_traversal"]["p50_latency_ms"] for p in platforms]
-    hop3_p95 = [platforms_data[p]["metrics"]["3_hop_traversal"]["p95_latency_ms"] for p in platforms]
+    hop3_p50 = [safe_float(get_nested(platforms_data[p], "metrics", "3_hop_traversal", "p50_latency_ms")) for p in platforms]
+    hop3_p95 = [safe_float(get_nested(platforms_data[p], "metrics", "3_hop_traversal", "p95_latency_ms")) for p in platforms]
     
     # 3. Lookups and aggregations
-    pt_p50 = [platforms_data[p]["metrics"]["point_lookup"]["p50_latency_ms"] for p in platforms]
-    idx_p50 = [platforms_data[p]["metrics"]["indexed_lookup"]["p50_latency_ms"] for p in platforms]
-    cnt_nodes_p50 = [platforms_data[p]["metrics"]["count_nodes"]["p50_latency_ms"] for p in platforms]
-    cnt_edges_p50 = [platforms_data[p]["metrics"]["count_edges"]["p50_latency_ms"] for p in platforms]
+    pt_p50 = [safe_float(get_nested(platforms_data[p], "metrics", "point_lookup", "p50_latency_ms")) for p in platforms]
+    idx_p50 = [safe_float(get_nested(platforms_data[p], "metrics", "indexed_lookup", "p50_latency_ms")) for p in platforms]
+    cnt_nodes_p50 = [safe_float(get_nested(platforms_data[p], "metrics", "count_nodes", "p50_latency_ms")) for p in platforms]
+    cnt_edges_p50 = [safe_float(get_nested(platforms_data[p], "metrics", "count_edges", "p50_latency_ms")) for p in platforms]
 
     # 4. Concurrency QPS and latency
-    con_qps = [platforms_data[p]["metrics"]["mixed_workload"]["queries_per_second"] for p in platforms]
-    con_p50 = [platforms_data[p]["metrics"]["mixed_workload"]["p50_latency_ms"] for p in platforms]
-    con_p95 = [platforms_data[p]["metrics"]["mixed_workload"]["p95_latency_ms"] for p in platforms]
+    con_qps = [safe_float(get_nested(platforms_data[p], "metrics", "mixed_workload", "queries_per_second")) for p in platforms]
+    con_p50 = [safe_float(get_nested(platforms_data[p], "metrics", "mixed_workload", "p50_latency_ms")) for p in platforms]
+    con_p95 = [safe_float(get_nested(platforms_data[p], "metrics", "mixed_workload", "p95_latency_ms")) for p in platforms]
 
     # Optional Observability and Cost data
     cpu_list = []
@@ -58,11 +81,11 @@ def generate_dashboard(results_dir="results", output_path="results/dashboard.htm
     cost_1m_list = []
     
     for p in platforms:
-        obs = platforms_data[p]["metrics"].get("observability", {})
-        cost = platforms_data[p]["metrics"].get("cost", {})
-        cpu_list.append(obs.get("avg_cpu", 0.0))
-        mem_list.append(obs.get("peak_mem_rss_mb", 0.0))
-        cost_1m_list.append(cost.get("cost_per_million_queries_usd", 0.0))
+        obs = get_nested(platforms_data[p], "metrics", "observability", default={})
+        cost = get_nested(platforms_data[p], "metrics", "cost", default={})
+        cpu_list.append(safe_float(obs.get("avg_cpu", 0.0)))
+        mem_list.append(safe_float(obs.get("peak_mem_rss_mb", 0.0)))
+        cost_1m_list.append(safe_float(cost.get("cost_per_million_queries_usd", 0.0)))
 
     # Initialize Plotly Figures
     fig1 = go.Figure()
@@ -122,18 +145,33 @@ def generate_dashboard(results_dir="results", output_path="results/dashboard.htm
     table_rows = ""
     for p in platforms:
         m = platforms_data[p]["metrics"]
-        obs = m.get("observability", {})
         cost = m.get("cost", {})
+        
+        node_load_time = get_nested(platforms_data[p], "metrics", "data_loading", "node_load_time_sec")
+        edge_load_time = get_nested(platforms_data[p], "metrics", "data_loading", "edge_load_time_sec")
+        
+        hop1_p50_val = get_nested(platforms_data[p], "metrics", "1_hop_traversal", "p50_latency_ms")
+        hop1_p95_val = get_nested(platforms_data[p], "metrics", "1_hop_traversal", "p95_latency_ms")
+        
+        hop2_p50_val = get_nested(platforms_data[p], "metrics", "2_hop_traversal", "p50_latency_ms")
+        hop2_p95_val = get_nested(platforms_data[p], "metrics", "2_hop_traversal", "p95_latency_ms")
+        
+        hop3_p50_val = get_nested(platforms_data[p], "metrics", "3_hop_traversal", "p50_latency_ms")
+        hop3_p95_val = get_nested(platforms_data[p], "metrics", "3_hop_traversal", "p95_latency_ms")
+        
+        con_qps_val = get_nested(platforms_data[p], "metrics", "mixed_workload", "queries_per_second")
+        cost_m_val = cost.get("cost_per_million_queries_usd", 0.0)
+        
         table_rows += f"""
         <tr class="border-b hover:bg-gray-50 text-sm">
             <td class="px-6 py-4 font-medium text-gray-900">{p}</td>
-            <td class="px-6 py-4">{m["data_loading"]["node_load_time_sec"]:.2f}s</td>
-            <td class="px-6 py-4">{m["data_loading"]["edge_load_time_sec"]:.2f}s</td>
-            <td class="px-6 py-4 font-semibold">{m["1_hop_traversal"]["p50_latency_ms"]:.2f} / {m["1_hop_traversal"]["p95_latency_ms"]:.2f}</td>
-            <td class="px-6 py-4 font-semibold">{m["2_hop_traversal"]["p50_latency_ms"]:.2f} / {m["2_hop_traversal"]["p95_latency_ms"]:.2f}</td>
-            <td class="px-6 py-4 font-semibold">{m["3_hop_traversal"]["p50_latency_ms"]:.2f} / {m["3_hop_traversal"]["p95_latency_ms"]:.2f}</td>
-            <td class="px-6 py-4 font-semibold">{m["mixed_workload"]["queries_per_second"]:.2f} QPS</td>
-            <td class="px-6 py-4">${cost.get("cost_per_million_queries_usd", 0.0):.2f}</td>
+            <td class="px-6 py-4">{safe_fmt(node_load_time)}s</td>
+            <td class="px-6 py-4">{safe_fmt(edge_load_time)}s</td>
+            <td class="px-6 py-4 font-semibold">{safe_fmt(hop1_p50_val)} / {safe_fmt(hop1_p95_val)}</td>
+            <td class="px-6 py-4 font-semibold">{safe_fmt(hop2_p50_val)} / {safe_fmt(hop2_p95_val)}</td>
+            <td class="px-6 py-4 font-semibold">{safe_fmt(hop3_p50_val)} / {safe_fmt(hop3_p95_val)}</td>
+            <td class="px-6 py-4 font-semibold">{safe_fmt(con_qps_val)} QPS</td>
+            <td class="px-6 py-4">${safe_fmt(cost_m_val)}</td>
         </tr>
         """
 

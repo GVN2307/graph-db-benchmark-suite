@@ -9,10 +9,14 @@ class NebulaQuerySet(BaseQuerySet):
         if not res.is_succeeded:
             print(f"[{self.name}] Query failed: {query} Error: {res.status_message}")
             return 0
-        if res.size > 0:
-            row = res.one()
-            val = row[0].cast_primitive()
-            return int(val)
+        if res.row_size() > 0:
+            try:
+                return res.row_values(0)[0].as_int()
+            except Exception:
+                try:
+                    return int(res.row_values(0)[0].cast_primitive())
+                except Exception:
+                    return 0
         return 0
 
     def _run_query(self, query):
@@ -23,18 +27,15 @@ class NebulaQuerySet(BaseQuerySet):
         return res
 
     def hop_1(self, start_node):
-        # nGQL GO 1 STEP for 1-hop neighbors, distinct count
-        query = f"GO 1 STEP FROM {start_node} OVER COLLABORATES YIELD $^.id AS neighbor_id | COUNT(DISTINCT $^.id)"
+        query = f"GO 1 STEP FROM '{start_node}' OVER COLLABORATES BIDIRECT YIELD DISTINCT id($$) AS id | YIELD COUNT($-.id)"
         return self._get_scalar(query)
 
     def hop_2(self, start_node):
-        # nGQL GO 2 STEP for 2-hop neighbors, distinct count
-        query = f"GO 2 STEP FROM {start_node} OVER COLLABORATES YIELD $^.id AS neighbor_id | COUNT(DISTINCT $^.id)"
+        query = f"GO 1 TO 2 STEPS FROM '{start_node}' OVER COLLABORATES BIDIRECT YIELD id($$) AS id | YIELD DISTINCT $-.id AS id WHERE $-.id != '{start_node}' | YIELD COUNT($-.id)"
         return self._get_scalar(query)
 
     def hop_3(self, start_node):
-        # nGQL GO 3 STEP for 3-hop neighbors, distinct count
-        query = f"GO 3 STEP FROM {start_node} OVER COLLABORATES YIELD $^.id AS neighbor_id | COUNT(DISTINCT $^.id)"
+        query = f"GO 1 TO 3 STEPS FROM '{start_node}' OVER COLLABORATES BIDIRECT YIELD id($$) AS id | YIELD DISTINCT $-.id AS id WHERE $-.id != '{start_node}' | YIELD COUNT($-.id)"
         return self._get_scalar(query)
 
     def point_lookup(self, node_id):
@@ -54,11 +55,15 @@ class NebulaQuerySet(BaseQuerySet):
         return self._get_scalar(query)
 
     def insert_edge(self, source_id, target_id):
-        query = f"MATCH (s:Author {{id: '{source_id}'}}), (d:Author {{id: '{target_id}'}}) INSERT (s)-[:COLLABORATES]->(d)"
+        query = f"INSERT EDGE COLLABORATES() VALUES '{source_id}' -> '{target_id}':()"
         self._run_query(query)
 
     def shortest_path(self, src_id, tgt_id):
-        query = f"MATCH p = shortestPath((src:Author {{id: '{src_id}'}})-[:COLLABORATES*..10]-(tgt:Author {{id: '{tgt_id}'}})) RETURN length(p)"
+        query = (
+            f"FIND SHORTEST PATH FROM '{src_id}' TO '{tgt_id}' "
+            f"OVER COLLABORATES BIDIRECT UPTO 10 STEPS YIELD path AS p "
+            f"| YIELD length($-.p)"
+        )
         return self._get_scalar(query)
 
     def triangle_count(self, node_id):

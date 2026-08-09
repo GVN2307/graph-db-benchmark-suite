@@ -1,0 +1,6 @@
+{
+    "platform": "TypeDB",
+    "metrics": {
+        "error": "Skipped: typedb-driver incompatible with Python 3.14+"
+    }
+}

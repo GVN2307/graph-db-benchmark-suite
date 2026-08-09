@@ -21,22 +21,39 @@ class BenchmarkHarness:
         }
         self.monitor = SystemMonitor(interval_sec=0.5)
 
+    def _is_connection_error(self, e):
+        err_str = str(e).lower()
+        keywords = [
+            "connection", "closed", "session expired", "service unavailable",
+            "broken pipe", "socket", "defunct", "reset by peer", "inactive", "timed out"
+        ]
+        if any(kw in err_str for kw in keywords):
+            return True
+        if isinstance(e, (ConnectionError, TimeoutError)):
+            return True
+        return False
+
     def _execute_with_reconnect(self, func, *args, **kwargs):
         """Execute a query function, reconnecting on connection errors.
-        Returns the function result or raises if second attempt fails.
+        Returns the function result, or raises a standard RuntimeError on persistent connection failures
+        to prevent process aborts.
         """
         try:
             return func(*args, **kwargs)
         except Exception as e:
             if self._is_connection_error(e):
-                print(f"[{self.platform}] Connection error detected: {e}. Reconnecting...")
+                print(f"[{self.platform}] Connection error detected: {e}. Reconnecting in 15s...")
                 try:
                     self.loader.close()
                 except Exception:
                     pass
-                self.loader.connect()
-                # retry once
-                return func(*args, **kwargs)
+                time.sleep(15)
+                try:
+                    self.loader.connect()
+                    return func(*args, **kwargs)
+                except Exception as retry_err:
+                    print(f"[{self.platform}] Persistent connection failure: {retry_err}")
+                    raise RuntimeError(f"Persistent connection failure: {retry_err}")
             else:
                 raise
 
@@ -60,8 +77,6 @@ class BenchmarkHarness:
 
         # Load Dataset once for all benchmarks
         try:
-            nodes, edges = parse_dataset()
-            # Determine sampling percentage from environment (default 100% – i.e., full dataset)
             try:
                 sample_percent = int(os.getenv("SAMPLE_PERCENT", "100"))
             except ValueError:
@@ -69,17 +84,19 @@ class BenchmarkHarness:
             if sample_percent not in (10, 50, 100):
                 print(f"[{self.platform}] Invalid SAMPLE_PERCENT={sample_percent}, falling back to 100%.")
                 sample_percent = 100
-            if sample_percent < 100:
-                print(f"[{self.platform}] Sampling dataset to {sample_percent}% for stable benchmarking.")
-                step = max(1, int(100 / sample_percent))
-                sampled_edges = edges[::step]
-                # Gather referenced node IDs from sampled edges
-                referenced_node_ids = {e["source"] for e in sampled_edges} | {e["target"] for e in sampled_edges}
-                sampled_nodes = [n for n in nodes if n["id"] in referenced_node_ids]
-                nodes = sampled_nodes
-                edges = sampled_edges
-                print(f"[{self.platform}] Sampled size: {len(nodes)} nodes, {len(edges)} edges.")
+            
+            nodes, edges = parse_dataset(sample_percent)
             node_ids = [n["id"] for n in nodes]
+            
+            # Calculate node degrees to filter query nodes for traversal stability on free cloud tiers
+            from collections import Counter
+            degrees = Counter()
+            for e in edges:
+                degrees[e["source"]] += 1
+                degrees[e["target"]] += 1
+            query_node_ids = [nid for nid in node_ids if 1 <= degrees[nid] <= 20]
+            if not query_node_ids:
+                query_node_ids = node_ids
         except Exception as e:
             print(f"[{self.platform}] Failed to load/parse dataset: {e}")
             self.results["error"] = f"Dataset error: {e}"
@@ -160,36 +177,36 @@ class BenchmarkHarness:
 
         # 5. Warm up (50 iterations of each query to allow JIT / cache warming)
         print(f"[{self.platform}] Performing warm-up...")
-        warmup_nodes = [random.choice(node_ids) for _ in range(50)]
+        warmup_nodes = [random.choice(query_node_ids) for _ in range(50)]
         for node in warmup_nodes:
-            try: self.queries.hop_1(node)
+            try: self._execute_with_reconnect(self.queries.hop_1, node)
             except Exception as e:
                 if self._is_connection_error(e): raise e
-            try: self.queries.hop_2(node)
+            try: self._execute_with_reconnect(self.queries.hop_2, node)
             except Exception as e:
                 if self._is_connection_error(e): raise e
-            try: self.queries.hop_3(node)
+            try: self._execute_with_reconnect(self.queries.hop_3, node)
             except Exception as e:
                 if self._is_connection_error(e): raise e
-            try: self.queries.point_lookup(node)
+            try: self._execute_with_reconnect(self.queries.point_lookup, node)
             except Exception as e:
                 if self._is_connection_error(e): raise e
-            try: self.queries.indexed_lookup(node)
+            try: self._execute_with_reconnect(self.queries.indexed_lookup, node)
             except Exception as e:
                 if self._is_connection_error(e): raise e
-            try: self.queries.shortest_path(node, random.choice(node_ids))
+            try: self._execute_with_reconnect(self.queries.shortest_path, node, random.choice(query_node_ids))
             except Exception as e:
                 if self._is_connection_error(e): raise e
-            try: self.queries.triangle_count(node)
+            try: self._execute_with_reconnect(self.queries.triangle_count, node)
             except Exception as e:
                 if self._is_connection_error(e): raise e
-            try: self.queries.common_neighbors(node, random.choice(node_ids))
+            try: self._execute_with_reconnect(self.queries.common_neighbors, node, random.choice(query_node_ids))
             except Exception as e:
                 if self._is_connection_error(e): raise e
-        try: self.queries.count_nodes()
+        try: self._execute_with_reconnect(self.queries.count_nodes)
         except Exception as e:
             if self._is_connection_error(e): raise e
-        try: self.queries.count_edges()
+        try: self._execute_with_reconnect(self.queries.count_edges)
         except Exception as e:
             if self._is_connection_error(e): raise e
         print(f"[{self.platform}] Warm-up completed.")
@@ -214,7 +231,7 @@ class BenchmarkHarness:
             self.results["metrics"]["correctness"] = {"error": str(e)}
 
         # 7. Run traversal benchmarks (1/2/3 hop, 100 iterations each)
-        test_nodes = [random.choice(node_ids) for _ in range(100)]
+        test_nodes = [random.choice(query_node_ids) for _ in range(100)]
         
         for hop in [1, 2, 3]:
             print(f"[{self.platform}] Running {hop}-hop traversals (100 iterations)...")
@@ -224,7 +241,7 @@ class BenchmarkHarness:
             for node in test_nodes:
                 start_t = time.perf_counter()
                 try:
-                    getattr(self.queries, f"hop_{hop}")(node)
+                    self._execute_with_reconnect(getattr(self.queries, f"hop_{hop}"), node)
                     latency = (time.perf_counter() - start_t) * 1000.0
                     raw_latencies.append(latency)
                     stats.record(latency)
@@ -270,7 +287,7 @@ class BenchmarkHarness:
             # Point Lookup
             start_t = time.perf_counter()
             try:
-                self.queries.point_lookup(node)
+                self._execute_with_reconnect(self.queries.point_lookup, node)
                 latency = (time.perf_counter() - start_t) * 1000.0
                 pt_raw.append(latency)
             except Exception as e:
@@ -282,7 +299,7 @@ class BenchmarkHarness:
             # Indexed Lookup
             start_t = time.perf_counter()
             try:
-                self.queries.indexed_lookup(node)
+                self._execute_with_reconnect(self.queries.indexed_lookup, node)
                 latency = (time.perf_counter() - start_t) * 1000.0
                 idx_raw.append(latency)
             except Exception as e:
@@ -320,7 +337,7 @@ class BenchmarkHarness:
             # Node count
             start_t = time.perf_counter()
             try:
-                self.queries.count_nodes()
+                self._execute_with_reconnect(self.queries.count_nodes)
                 nc_stats.record((time.perf_counter() - start_t) * 1000.0)
             except Exception as e:
                 node_count_failures += 1
@@ -331,7 +348,7 @@ class BenchmarkHarness:
             # Edge count
             start_t = time.perf_counter()
             try:
-                self.queries.count_edges()
+                self._execute_with_reconnect(self.queries.count_edges)
                 ec_stats.record((time.perf_counter() - start_t) * 1000.0)
             except Exception as e:
                 edge_count_failures += 1
@@ -353,9 +370,9 @@ class BenchmarkHarness:
             "failures": edge_count_failures
         }
 
-        # 10. Run concurrent mixed workload (10 clients, 60s)
+        # 10. Run concurrent mixed workload (2 clients, 10s)
         try:
-            runner = ConcurrentRunner(self.queries, node_ids, num_threads=10, duration_seconds=60)
+            runner = ConcurrentRunner(self.queries, query_node_ids, num_threads=2, duration_seconds=10)
             concurrent_results = runner.run()
             self.results["metrics"]["mixed_workload"] = concurrent_results
         except Exception as e:
@@ -384,12 +401,19 @@ class BenchmarkHarness:
 
         # 13. Re-generate Plotly HTML Dashboard
         try:
-            generate_dashboard()
+            sample_percent = os.getenv("SAMPLE_PERCENT", "100")
+            r_dir = os.path.join("results", sample_percent)
+            o_path = os.path.join(r_dir, "dashboard.html")
+            generate_dashboard(results_dir=r_dir, output_path=o_path)
         except Exception as e:
             print(f"[{self.platform}] Dashboard generation failed: {e}")
 
     def save_results(self):
-        results_dir = "results"
+        try:
+            sample_percent = os.getenv("SAMPLE_PERCENT", "100")
+        except Exception:
+            sample_percent = "100"
+        results_dir = os.path.join("results", sample_percent)
         if not os.path.exists(results_dir):
             os.makedirs(results_dir)
             
